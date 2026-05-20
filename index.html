@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nicole Mayd Creations</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@600&family=Fredoka+One&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#5a3a3a;--bark:#7a5050;--clay:#fc8c5d;--sand:#fdba9e;
+  --linen:#fde8de;--parchment:#fff4f0;--paper:#fff9f7;--white:#fff;
+  --pink:#fb96a6;--pink-light:#fdd5dc;--lavender:#c5b8d8;
+  --success:#6a9e7a;--danger:#c47070;
+}
+body{font-family:'Nunito',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;font-weight:400}
+
+/* NAV */
+nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:72px;position:sticky;top:0;z-index:50;box-shadow:0 2px 16px rgba(212,130,106,.08)}
+.logo{display:flex;flex-direction:column;line-height:1}
+.logo-top{font-family:'Fredoka One',cursive;font-size:22px;color:#fc8c5d}
+.logo-top span{color:#fb96a6}
+.logo-script{font-family:'Dancing Script',cursive;font-size:18px;color:var(--lavender);margin-top:-2px}
+.nav-tabs{display:flex;background:var(--parchment);border-radius:30px;padding:4px;gap:2px;border:1.5px solid var(--linen)}
+.nav-tab{padding:8px 20px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--bark);cursor:pointer;border-radius:20px;transition:all .2s;font-weight:700;border:none;background:none;font-family:'Nunito',sans-serif}
+.nav-tab.active{background:var(--clay);color:#fff}
+.nav-tab:hover:not(.active){background:var(--linen)}
+.admin-lock{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sand);letter-spacing:.06em;cursor:pointer;transition:color .2s;font-weight:700}
+.admin-lock:hover{color:var(--clay)}
+.admin-lock svg{width:14px;height:14px}
+
+/* VIEWS */
+.view{display:none;padding:48px 40px;max-width:1300px;margin:0 auto}
+.view.active{display:block}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px}
+.section-title{font-family:'Fredoka One',cursive;font-size:28px;color:var(--clay)}
+.section-title span{display:block;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;color:var(--pink);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+
+/* BUTTONS */
+.btn{padding:12px 24px;border-radius:30px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s}
+.btn-dark{background:var(--clay);color:#fff}
+.btn-dark:hover{background:var(--bark)}
+.btn-outline{background:transparent;color:var(--bark);border:2px solid var(--linen)}
+.btn-outline:hover{border-color:var(--clay);color:var(--clay)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-sm{padding:8px 18px;font-size:11px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2.5px dashed var(--linen);border-radius:20px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);margin-bottom:40px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--clay);background:var(--parchment)}
+.upload-icon{width:48px;height:48px;margin:0 auto 14px;opacity:.3;color:var(--clay)}
+.upload-zone p{font-size:14px;color:var(--bark);line-height:1.7;font-weight:600}
+.upload-zone p strong{color:var(--clay);font-weight:700}
+#adminFileInput{display:none}
+
+/* ADMIN GRID */
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.admin-card{background:var(--white);border-radius:16px;overflow:hidden;border:2px solid var(--linen);transition:box-shadow .2s;animation:fadeUp .3s ease both}
+.admin-card:hover{box-shadow:0 8px 30px rgba(212,130,106,.15)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.admin-img{width:100%;padding-bottom:75%;position:relative;overflow:hidden;background:var(--linen)}
+.admin-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.admin-card:hover .admin-img img{transform:scale(1.05)}
+.admin-card-body{padding:14px 16px}
+.admin-card-name{font-family:'Fredoka One',cursive;font-size:16px;margin-bottom:8px;color:var(--clay)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;min-height:22px}
+.tag{font-size:10px;background:var(--pink-light);color:var(--bark);padding:3px 10px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.admin-card-actions{display:flex;gap:8px}
+.stock-toggle{flex:1;padding:7px 12px;font-size:11px;border-radius:20px;border:2px solid var(--linen);cursor:pointer;font-family:'Nunito',sans-serif;text-transform:uppercase;font-weight:700;transition:all .2s;background:transparent;color:var(--success)}
+.stock-toggle.out{color:var(--danger);border-color:rgba(196,112,112,.3)}
+.stock-toggle:hover{border-color:currentColor}
+.del-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:2px solid var(--linen);border-radius:50%;cursor:pointer;transition:all .2s;color:var(--bark);flex-shrink:0}
+.del-btn:hover{background:var(--danger);border-color:var(--danger);color:#fff}
+.del-btn svg{width:13px;height:13px;pointer-events:none}
+.stock-badge{position:absolute;top:10px;left:10px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;font-weight:700;font-family:'Nunito',sans-serif}
+.stock-badge.in{background:rgba(106,158,122,.85);color:#fff}
+.stock-badge.out{background:rgba(196,112,112,.85);color:#fff}
+
+/* PRICING ADMIN */
+.pricing-admin{background:var(--white);border:2px solid var(--linen);border-radius:20px;padding:28px 32px;margin-bottom:40px}
+.pricing-admin h3{font-family:'Fredoka One',cursive;font-size:22px;color:var(--clay);margin-bottom:6px}
+.pricing-admin p{font-size:13px;color:var(--bark);margin-bottom:24px;font-weight:600}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.pricing-card{background:var(--parchment);border-radius:14px;padding:18px 20px;border:1.5px solid var(--linen)}
+.pricing-card h4{font-family:'Fredoka One',cursive;font-size:15px;margin-bottom:14px;color:var(--clay)}
+.price-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.price-row label{font-size:12px;color:var(--bark);flex:1;font-weight:600}
+.price-input{width:80px;padding:7px 10px;border:2px solid var(--linen);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--ink);background:var(--white);text-align:right;font-weight:700}
+.price-input:focus{outline:none;border-color:var(--clay)}
+.price-prefix{font-size:13px;color:var(--bark);font-weight:700}
+
+/* EMAILJS SETTINGS */
+.emailjs-setup{background:var(--pink-light);border:2px solid var(--pink);border-radius:14px;padding:20px 24px;margin-bottom:32px}
+.emailjs-setup h4{font-family:'Fredoka One',cursive;font-size:16px;color:var(--bark);margin-bottom:8px}
+.emailjs-setup p{font-size:12px;color:var(--bark);margin-bottom:14px;line-height:1.6;font-weight:600}
+.ejs-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ejs-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:5px;font-weight:700}
+.ejs-group input{width:100%;padding:9px 12px;border:2px solid var(--pink);border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;background:var(--white)}
+.ejs-group input:focus{outline:none;border-color:var(--clay)}
+
+/* CLIENT VIEW */
+.client-layout{display:grid;grid-template-columns:1fr 420px;gap:48px;align-items:start}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.filter-chip{padding:7px 18px;border-radius:20px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:2px solid var(--linen);background:var(--white);color:var(--bark);font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s}
+.filter-chip.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+.filter-chip:hover:not(.active){border-color:var(--clay);color:var(--clay)}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px}
+.client-card{background:var(--white);border-radius:16px;overflow:hidden;cursor:pointer;border:2.5px solid transparent;transition:all .2s;box-shadow:0 2px 8px rgba(212,130,106,.08);animation:fadeUp .25s ease both;position:relative}
+.client-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(212,130,106,.18)}
+.client-card.selected{border-color:var(--clay)}
+.client-card.out-of-stock{opacity:.4;cursor:not-allowed;pointer-events:none}
+.client-img{width:100%;padding-bottom:100%;position:relative;overflow:hidden;background:var(--linen)}
+.client-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.client-card:hover .client-img img{transform:scale(1.05)}
+.client-check{position:absolute;top:8px;right:8px;width:26px;height:26px;background:var(--clay);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:all .2s}
+.client-card.selected .client-check{opacity:1;transform:scale(1)}
+.client-check svg{width:12px;height:12px}
+.client-card-info{padding:10px 12px}
+.client-card-name{font-family:'Fredoka One',cursive;font-size:14px;line-height:1.3;color:var(--clay)}
+
+/* RIGHT PANEL */
+.right-panel{position:sticky;top:88px}
+.panel-box{background:var(--white);border-radius:20px;border:2px solid var(--linen);overflow:hidden;margin-bottom:16px}
+.panel-head{padding:14px 20px;border-bottom:2px solid var(--linen);display:flex;align-items:center;justify-content:space-between;background:var(--parchment)}
+.panel-head h3{font-family:'Fredoka One',cursive;font-size:16px;color:var(--clay)}
+.count-pill{background:var(--pink);color:#fff;font-size:11px;padding:3px 12px;border-radius:20px;font-weight:700}
+
+/* SEQUENCE */
+.sequence-list{padding:14px;min-height:100px;display:flex;flex-direction:column;gap:8px}
+.seq-item{display:flex;align-items:center;gap:10px;background:var(--parchment);border-radius:12px;padding:9px 10px;cursor:grab;transition:all .15s;border:2px solid transparent;user-select:none}
+.seq-item:active{cursor:grabbing}
+.seq-item.dragging{opacity:.4;border-color:var(--clay)}
+.seq-item.drag-over{border-color:var(--pink);background:var(--pink-light)}
+.seq-num{font-family:'Fredoka One',cursive;font-size:16px;color:var(--sand);width:18px;text-align:center;flex-shrink:0}
+.seq-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0}
+.seq-name{font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;flex:1;color:var(--bark)}
+.seq-remove{background:none;border:none;cursor:pointer;color:var(--sand);font-size:20px;line-height:1;padding:0 2px;transition:color .15s;flex-shrink:0}
+.seq-remove:hover{color:var(--danger)}
+.drag-handle{color:var(--linen);flex-shrink:0}
+.drag-handle svg{width:13px;height:13px;display:block}
+.seq-empty{text-align:center;padding:24px 20px;color:var(--sand);font-size:13px;line-height:1.7;font-weight:600}
+
+.in-use-badge{position:absolute;top:8px;left:8px;width:22px;height:22px;background:var(--clay);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Nunito',sans-serif}
+/* COLOUR DISCLAIMER */
+.colour-disclaimer{font-size:12px;color:var(--bark);background:var(--parchment);padding:10px 16px;font-weight:600;border-bottom:2px solid var(--linen);line-height:1.4}
+
+/* LETTER SLOTS */
+.letter-slots-wrap{padding:14px;display:flex;flex-direction:column;gap:10px}
+.letter-slot{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid var(--linen);background:var(--parchment);cursor:pointer;transition:all .2s;position:relative}
+.letter-slot:hover{border-color:var(--sand)}
+.letter-slot.active-slot{border-color:var(--clay);background:var(--white);box-shadow:0 0 0 3px rgba(212,130,106,.15)}
+.letter-slot.filled{border-color:var(--pink-light)}
+.slot-letter{font-family:'Fredoka One',cursive;font-size:28px;color:var(--clay);width:36px;text-align:center;flex-shrink:0;line-height:1}
+.slot-fabric-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;border:2px solid var(--linen)}
+.slot-fabric-thumb.empty{background:var(--linen);display:flex;align-items:center;justify-content:center}
+.slot-info{flex:1;min-width:0}
+.slot-fabric-name{font-size:13px;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-prompt{font-size:12px;color:var(--sand);font-weight:600}
+.slot-clear{background:none;border:none;cursor:pointer;color:var(--sand);font-size:20px;line-height:1;padding:0 4px;transition:color .15s;flex-shrink:0}
+.slot-clear:hover{color:var(--danger)}
+.slot-arrow{font-size:14px;color:var(--clay);flex-shrink:0}
+
+/* PREVIEW STRIP */
+.preview-strip{display:flex;gap:2px;background:var(--linen);min-height:60px}
+.preview-strip-slot{flex:1;overflow:hidden;min-width:0}
+.preview-strip-slot img{width:100%;height:60px;object-fit:cover;display:block}
+.strip-empty{width:100%;height:60px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--sand);background:var(--linen);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+
+/* PRODUCT SELECTOR */
+.product-selector{padding:14px;display:flex;flex-direction:column;gap:8px}
+.product-option{border:2px solid var(--linen);border-radius:14px;padding:12px 14px;cursor:pointer;transition:all .2s;background:var(--parchment)}
+.product-option:hover{border-color:var(--sand)}
+.product-option.active{border-color:var(--clay);background:var(--white)}
+.product-option-head{display:flex;align-items:center;justify-content:space-between}
+.product-option-name{font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--bark)}
+.product-price-tag{font-size:14px;color:var(--clay);font-weight:700}
+.product-option-desc{font-size:12px;color:var(--bark);margin-top:3px;line-height:1.4;opacity:.75}
+
+/* NAME INPUT */
+.name-section{padding:16px}
+.name-field{width:100%;padding:12px 16px;border:2px solid var(--linen);border-radius:14px;font-family:'Fredoka One',cursive;font-size:20px;color:var(--clay);background:var(--parchment);transition:border-color .2s;letter-spacing:.08em}
+.name-field:focus{outline:none;border-color:var(--clay);background:var(--white)}
+.letter-display{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;min-height:38px}
+.letter-box{width:36px;height:36px;border-radius:10px;background:var(--clay);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:18px;text-transform:uppercase;animation:popIn .15s ease}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.letter-count-note{font-size:12px;color:var(--bark);margin-top:8px;font-weight:600}
+.letter-count-note strong{color:var(--clay)}
+
+/* PRICE SUMMARY */
+.price-summary{margin:0 16px 16px;background:var(--parchment);border-radius:14px;padding:14px 16px;border:2px solid var(--linen)}
+.price-line{display:flex;justify-content:space-between;font-size:13px;color:var(--bark);margin-bottom:6px;font-weight:600}
+.price-line.total{font-size:16px;color:var(--ink);font-weight:700;border-top:2px solid var(--linen);padding-top:10px;margin-top:4px;margin-bottom:0}
+.price-line.total span:last-child{font-family:'Fredoka One',cursive;font-size:20px;color:var(--clay)}
+.shipping-note{font-size:11px;color:var(--sand);margin-top:8px;font-weight:600}
+
+/* ENQUIRY FORM */
+.enq-form{padding:16px;display:flex;flex-direction:column;gap:12px}
+.form-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:6px;font-weight:700}
+.form-group input,.form-group textarea{width:100%;padding:10px 14px;border:2px solid var(--linen);border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--ink);background:var(--parchment);transition:border-color .2s;resize:none}
+.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--clay);background:var(--white)}
+.submit-btn{width:100%;padding:15px;background:var(--clay);color:#fff;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;font-family:'Nunito',sans-serif;border:none;border-radius:30px;cursor:pointer;transition:all .2s}
+.submit-btn:hover:not(:disabled){background:var(--bark)}
+.submit-btn:disabled{opacity:.35;cursor:not-allowed}
+.sending-note{font-size:12px;text-align:center;color:var(--bark);font-weight:600;display:none}
+
+/* SUCCESS / ERROR */
+.success-banner{display:none;background:rgba(106,158,122,.1);border:2px solid rgba(106,158,122,.35);border-radius:16px;padding:20px;text-align:center;color:var(--success);margin-bottom:16px}
+.success-banner.show{display:block}
+.success-banner h4{font-family:'Fredoka One',cursive;font-size:20px;margin-bottom:6px}
+.success-banner p{font-size:13px;opacity:.85;font-weight:600}
+.error-banner{display:none;background:rgba(196,112,112,.1);border:2px solid rgba(196,112,112,.35);border-radius:16px;padding:14px 20px;text-align:center;color:var(--danger);margin-bottom:12px;font-size:13px;font-weight:600}
+.error-banner.show{display:block}
+
+/* ENQUIRY LOG */
+.enq-log{display:flex;flex-direction:column;gap:16px}
+.enq-entry{background:var(--white);border:2px solid var(--linen);border-radius:16px;overflow:hidden;animation:fadeUp .3s ease}
+.enq-entry-head{padding:14px 18px;border-bottom:2px solid var(--linen);display:flex;align-items:flex-start;justify-content:space-between;background:var(--parchment)}
+.enq-entry-name{font-family:'Fredoka One',cursive;font-size:17px;color:var(--clay)}
+.enq-entry-date{font-size:11px;color:var(--sand);font-weight:700}
+.enq-entry-body{padding:14px 18px}
+.enq-product-tag{display:inline-block;font-size:11px;background:var(--pink-light);color:var(--bark);padding:3px 12px;border-radius:20px;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+.enq-name-text{font-family:'Fredoka One',cursive;font-size:22px;letter-spacing:.1em;color:var(--clay);margin-bottom:10px}
+.enq-fabrics-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.enq-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;border:2px solid var(--linen)}
+.enq-arrow{color:var(--sand);font-size:16px}
+.enq-price-row{font-size:13px;color:var(--bark);font-weight:600;margin-top:6px}
+.enq-price-row strong{color:var(--clay);font-size:16px;font-family:'Fredoka One',cursive}
+.enq-note{font-size:13px;color:var(--bark);font-style:italic;margin-top:8px}
+.enq-email{font-size:12px;color:var(--clay);font-weight:600}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(90,58,58,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:24px;padding:40px;width:460px;max-width:92vw;box-shadow:0 30px 80px rgba(212,130,106,.2);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal h2{font-family:'Fredoka One',cursive;font-size:26px;color:var(--clay);margin-bottom:6px}
+.modal .modal-sub{font-size:13px;color:var(--bark);margin-bottom:28px;line-height:1.5;font-weight:600}
+.modal-preview-img{width:100%;height:160px;object-fit:cover;border-radius:14px;margin-bottom:20px;border:2px solid var(--linen)}
+.modal-input-group{margin-bottom:18px}
+.modal-input-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:8px;font-weight:700}
+.modal-input-group input{width:100%;padding:12px 14px;border:2px solid var(--linen);border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--ink);background:var(--parchment);transition:border-color .2s}
+.modal-input-group input:focus{outline:none;border-color:var(--clay);background:var(--white)}
+.tag-row{display:flex;gap:8px}
+.tag-row input{flex:1}
+.tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:26px}
+.tag-chip{background:var(--pink-light);color:var(--bark);border:2px solid var(--pink-light);padding:4px 12px;border-radius:20px;font-size:11px;text-transform:uppercase;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s}
+.tag-chip:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.modal-footer{display:flex;gap:10px;margin-top:8px}
+.modal-footer .btn{flex:1}
+.pw-field{width:100%;padding:14px;border:2px solid var(--linen);border-radius:14px;font-size:16px;font-family:'Nunito',sans-serif;text-align:center;letter-spacing:.2em;background:var(--parchment)}
+.pw-field:focus{outline:none;border-color:var(--clay)}
+.pw-error{font-size:12px;color:var(--danger);text-align:center;margin-top:8px;display:none;font-weight:700}
+.pw-error.show{display:block}
+.empty-msg{text-align:center;padding:60px 20px;color:var(--sand);font-size:14px;line-height:1.8;font-weight:600}
+
+.logo-img{height:48px;max-width:180px;object-fit:contain}
+.preset-cats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+.preset-cat{padding:6px 14px;border-radius:20px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;border:2px solid var(--linen);background:var(--parchment);color:var(--bark);transition:all .15s;letter-spacing:.04em}
+.preset-cat.active{background:var(--pink);border-color:var(--pink);color:#fff}
+.preset-cat:hover:not(.active){border-color:var(--clay);color:var(--clay)}
+@media(max-width:960px){
+  .client-layout{grid-template-columns:1fr;display:flex;flex-direction:column}
+  .right-panel{position:static;order:-1}
+  .fabric-browse{order:1}
+  nav{padding:0 20px}
+  .view{padding:32px 20px}
+  .ejs-fields{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-top">Nicole <span>Mayd</span></div>
+    <div class="logo-script">Creations</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-view="client">Order</button>
+    <button class="nav-tab" data-view="enquiries" id="enqTab">Enquiries</button>
+  </div>
+  <div class="admin-lock" id="adminLockBtn">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="2" y="6" width="10" height="7" rx="1.5"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6"/>
+    </svg>
+    Admin
+  </div>
+</nav>
+
+<!-- ===== CLIENT VIEW ===== -->
+<div class="view active" id="clientView">
+  <div class="client-layout">
+    <div class="fabric-browse">
+      <div class="section-header">
+        <div class="section-title">Choose Your Fabrics</div>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-chip active" data-tag="all">All</button>
+      </div>
+      <div class="client-grid" id="clientGrid">
+        <div class="empty-msg">No fabrics available yet — check back soon!</div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="success-banner" id="successBanner">
+        <h4>Enquiry Sent! 🎉</h4>
+        <p>Check your inbox — a confirmation is on its way.<br>Nicole will be in touch soon!</p>
+      </div>
+      <div class="error-banner" id="errorBanner">Oops! Something went wrong sending your enquiry. Please try again or contact Nicole directly.</div>
+
+      <!-- STEP 1: PRODUCT TYPE -->
+      <div class="panel-box">
+        <div class="panel-head"><h3>What are you ordering?</h3></div>
+        <div class="product-selector" id="productSelector"></div>
+      </div>
+
+      <!-- STEP 2: NAME (shown when product needs it) -->
+      <div class="panel-box" id="namePanel" style="display:none">
+        <div class="panel-head"><h3>Enter Name / Word</h3></div>
+        <div class="name-section">
+          <input type="text" class="name-field" id="nameInput" placeholder="e.g. FRED" maxlength="20">
+          <div class="letter-count-note" id="letterCountNote"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3: FABRIC PER LETTER (name banner) OR GENERAL FABRIC PICK -->
+      <div class="panel-box" id="fabricPanel">
+        <div class="panel-head">
+          <h3 id="fabricPanelTitle">Your Fabrics</h3>
+          <span class="count-pill" id="selCount">0</span>
+        </div>
+        <div class="colour-disclaimer">
+          📸 Photos show fabric as accurately as possible — colours may vary slightly on screen.
+        </div>
+        <div id="letterSlots"></div>
+        <div class="preview-strip" id="previewStrip">
+          <div class="strip-empty">Select fabrics to preview</div>
+        </div>
+        <div class="sequence-list" id="sequenceList" style="display:none">
+          <div class="seq-empty">Tap a fabric to add it.<br>Drag to set your order.</div>
+        </div>
+      </div>
+
+      <!-- PRICE SUMMARY -->
+      <div class="panel-box" id="priceSummaryPanel" style="display:none">
+        <div class="panel-head"><h3>Price Summary</h3></div>
+        <div class="price-summary" id="priceSummary"></div>
+      </div>
+
+      <!-- STEP 4: YOUR DETAILS -->
+      <div class="panel-box">
+        <div class="panel-head"><h3>Your Details</h3></div>
+        <div class="enq-form">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="enqName" placeholder="First and last name">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="enqEmail" placeholder="your@email.com">
+          </div>
+          <div class="form-group">
+            <label>Notes (optional)</label>
+            <textarea id="enqNote" rows="2" placeholder="Colours, occasion, anything else…"></textarea>
+          </div>
+          <div class="error-banner" id="formErrorBanner" style="margin-bottom:0"></div>
+          <div class="sending-note" id="sendingNote">Sending your enquiry… ✨</div>
+          <button class="submit-btn" id="submitEnqBtn" disabled>Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN VIEW ===== -->
+<div class="view" id="adminView">
+  <div class="section-header">
+    <div class="section-title"><span>Admin</span>Library & Settings</div>
+    <button class="btn btn-outline btn-sm" id="adminLogoutBtn">Lock Admin</button>
+  </div>
+
+  <!-- LOGO UPLOAD -->
+  <div class="emailjs-setup" style="margin-bottom:24px">
+    <h4>🖼️ Logo</h4>
+    <p>Upload your Nicole Mayd Creations logo to replace the text in the nav bar. PNG with transparent background works best.</p>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div id="logoPreviewWrap" style="display:none">
+        <img id="logoPreviewImg" style="height:48px;border-radius:8px;border:2px solid var(--linen)">
+      </div>
+      <div>
+        <input type="file" id="logoFileInput" accept="image/*" style="display:none">
+        <button class="btn btn-outline btn-sm" id="uploadLogoBtn">Choose Logo Image</button>
+        <button class="btn btn-outline btn-sm" id="removeLogoBtn" style="margin-left:8px;display:none;color:var(--danger);border-color:var(--danger)">Remove Logo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAILJS SETUP -->
+  <div class="emailjs-setup">
+    <h4>📧 EmailJS Setup</h4>
+    <p>Enter your EmailJS credentials below. These are saved in your browser. <a href="https://www.emailjs.com" target="_blank" style="color:var(--clay)">Sign up free at emailjs.com</a> — you'll need your Public Key, Service ID, and Template ID.</p>
+    <div class="ejs-fields">
+      <div class="ejs-group">
+        <label>Public Key</label>
+        <input type="text" id="ejsPublicKey" placeholder="e.g. user_xxxxxxxxx">
+      </div>
+      <div class="ejs-group">
+        <label>Service ID</label>
+        <input type="text" id="ejsServiceId" placeholder="e.g. service_xxxxxx">
+      </div>
+      <div class="ejs-group">
+        <label>Template ID</label>
+        <input type="text" id="ejsTemplateId" placeholder="e.g. template_xxxxxx">
+      </div>
+    </div>
+    <button class="btn btn-dark btn-sm" id="saveEjsBtn" style="margin-top:14px">Save Email Settings</button>
+    <span id="ejsSaved" style="font-size:12px;color:var(--success);font-weight:700;margin-left:12px;display:none">Saved ✓</span>
+  </div>
+
+  <!-- PRICING EDITOR -->
+  <div class="pricing-admin">
+    <h3>Pricing</h3>
+    <p>Update prices here — changes show to clients immediately after saving.</p>
+    <div class="pricing-grid" id="pricingEditor"></div>
+    <button class="btn btn-dark btn-sm" id="savePricesBtn" style="margin-top:20px">Save Prices</button>
+    <span id="pricesSaved" style="font-size:12px;color:var(--success);font-weight:700;margin-left:12px;display:none">Saved ✓</span>
+  </div>
+
+  <!-- FABRIC UPLOAD -->
+  <div class="section-title" style="margin-bottom:20px"><span>Fabrics</span>Fabric Library</div>
+  <div class="upload-zone" id="uploadZone">
+    <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="4" y="4" width="40" height="40" rx="4"/><circle cx="18" cy="18" r="5"/>
+      <path d="M4 34l12-12 8 8 5-5 15 15"/>
+    </svg>
+    <p><strong>Click to upload fabrics</strong> or drag &amp; drop<br>JPG, PNG, WEBP — multiple files supported</p>
+    <input type="file" id="adminFileInput" accept="image/*" multiple>
+  </div>
+  <div class="admin-grid" id="adminGrid">
+    <div class="empty-msg" style="grid-column:1/-1">No fabrics yet. Upload some above.</div>
+  </div>
+</div>
+
+<!-- ===== ENQUIRIES VIEW ===== -->
+<div class="view" id="enquiriesView">
+  <div class="section-header">
+    <div class="section-title"><span>Admin</span>Enquiries</div>
+    <button class="btn btn-outline btn-sm" id="clearEnqBtn">Clear All</button>
+  </div>
+  <div class="enq-log" id="enqLog"><div class="empty-msg">No enquiries yet.</div></div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <h2>Admin Access</h2>
+    <p class="modal-sub">Enter your password to manage the fabric library and settings.</p>
+    <input type="password" class="pw-field" id="pwField" placeholder="••••••••">
+    <div class="pw-error" id="pwError">Incorrect password. Try again.</div>
+    <div class="modal-footer" style="margin-top:20px">
+      <button class="btn btn-outline" id="cancelPw">Cancel</button>
+      <button class="btn btn-dark" id="confirmPw">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FABRIC MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h2>Add Fabric</h2>
+    <p class="modal-sub">Name your fabric and choose its categories. You can add multiple.</p>
+    <img id="addPreviewImg" class="modal-preview-img" src="" alt="">
+    <div class="modal-input-group">
+      <label>Fabric Name</label>
+      <input type="text" id="addNameInput" placeholder="e.g. Dusty Rose Linen" autocomplete="off">
+    </div>
+    <div class="modal-input-group">
+      <label>Categories</label>
+      <div class="preset-cats" id="presetCats">
+        <button class="preset-cat" data-cat="pink">Pink</button>
+        <button class="preset-cat" data-cat="purple">Purple</button>
+        <button class="preset-cat" data-cat="blue">Blue</button>
+        <button class="preset-cat" data-cat="green">Green</button>
+        <button class="preset-cat" data-cat="yellow">Yellow</button>
+        <button class="preset-cat" data-cat="neutral">Neutral</button>
+        <button class="preset-cat" data-cat="floral">Floral</button>
+        <button class="preset-cat" data-cat="stripe">Stripe</button>
+        <button class="preset-cat" data-cat="spotty">Spotty</button>
+        <button class="preset-cat" data-cat="plain">Plain</button>
+        <button class="preset-cat" data-cat="seasonal">Seasonal</button>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--bark);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Or add a custom category</div>
+      <div class="tag-row">
+        <input type="text" id="addTagInput" placeholder="e.g. christmas, pastel…" autocomplete="off">
+        <button class="btn btn-outline btn-sm" id="addTagConfirm">Add</button>
+      </div>
+      <div class="tag-chips" id="addTagChips"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cancelAdd">Cancel</button>
+      <button class="btn btn-dark" id="confirmAdd">Save to Library</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+const ADMIN_PW = 'nicole2024'; // Change this!
+
+const DEFAULT_PRICING = {
+  nameBanner: {
+    label: 'Name Banner',
+    letterPrices: {3:25, 4:30, 5:32.50, 6:35, 7:37.50, 8:40},
+    extraPerLetter: 2.50,
+    needsName: true,
+    desc: 'Fabric letter banner personalised with a name'
+  },
+  wellnessPlain: {
+    label: 'Wellness Book Cover',
+    basePrice: 18, needsName: false,
+    desc: 'Plain cover, no name'
+  },
+  wellnessName: {
+    label: 'Wellness Book Cover + Name',
+    basePrice: 23, needsName: true,
+    desc: 'Cover personalised with your name'
+  },
+  wristletPlain: {
+    label: 'Wristlet',
+    basePrice: 10, needsName: false,
+    desc: 'Plain wristlet'
+  },
+  wristletPersonal: {
+    label: 'Wristlet Personalised',
+    basePrice: 15, needsName: true,
+    desc: 'Wristlet with personalisation'
+  },
+  crownPlain: {
+    label: 'Birthday Crown',
+    basePrice: 15, needsName: false,
+    desc: 'Plain birthday crown'
+  },
+  crownNumber: {
+    label: 'Birthday Crown + Number',
+    basePrice: 20, needsName: true,
+    desc: 'Crown with age number added'
+  }
+};
+
+// ===================== STORAGE =====================
+const KEYS = { fabrics:'nmc_fabrics', enquiries:'nmc_enquiries', pricing:'nmc_pricing', ejs:'nmc_ejs' };
+
+async function sGet(key) {
+  try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
+  catch { const d = localStorage.getItem(key); return d ? JSON.parse(d) : null; }
+}
+async function sSet(key, val) {
+  try { await window.storage.set(key, JSON.stringify(val)); }
+  catch { localStorage.setItem(key, JSON.stringify(val)); }
+}
+
+// ===================== STATE =====================
+let fabrics=[], enquiries=[], pricing={}, ejsConfig={};
+let selected=[], activeProduct=null, nameValue='', activeFilter='all';
+let isAdmin=false, pendingFiles=[], pendingIdx=0, pendingTags=[], dragSrcIdx=null;
+
+// ===================== BOOT =====================
+(async () => {
+  fabrics      = (await sGet(KEYS.fabrics))   || [];
+  enquiries    = (await sGet(KEYS.enquiries)) || [];
+  pricing      = (await sGet(KEYS.pricing))   || JSON.parse(JSON.stringify(DEFAULT_PRICING));
+  ejsConfig    = (await sGet(KEYS.ejs))       || {};
+
+  // pre-fill EmailJS fields if saved
+  if (ejsConfig.publicKey)  document.getElementById('ejsPublicKey').value  = ejsConfig.publicKey;
+  if (ejsConfig.serviceId)  document.getElementById('ejsServiceId').value  = ejsConfig.serviceId;
+  if (ejsConfig.templateId) document.getElementById('ejsTemplateId').value = ejsConfig.templateId;
+  if (ejsConfig.publicKey)  emailjs.init(ejsConfig.publicKey);
+
+  // Load saved logo
+  const savedLogo = await sGet('nmc_logo');
+  if (savedLogo) applyLogo(savedLogo);
+
+  renderProductSelector();
+  renderClientGrid();
+  renderFilters();
+  renderAdminGrid();
+  renderPricingEditor();
+  renderEnquiries();
+  document.querySelector('[data-view="enquiries"]').style.display = 'none';
+})();
+
+// ===================== NAV =====================
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const v = tab.dataset.view;
+    if (v === 'enquiries' && !isAdmin) { showPwModal('enquiries'); return; }
+    switchView(v);
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById(v + 'View').classList.add('active');
+}
+
+// ===================== ADMIN =====================
+const lockSVG   = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="10" height="7" rx="1.5"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6"/></svg>`;
+const unlockSVG = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="10" height="6" rx="1.5"/><path d="M4.5 7V5.5a2.5 2.5 0 015 0"/></svg>`;
+
+document.getElementById('adminLockBtn').addEventListener('click', () => isAdmin ? lockAdmin() : showPwModal('admin'));
+document.getElementById('adminLogoutBtn').addEventListener('click', lockAdmin);
+
+function lockAdmin() {
+  isAdmin = false;
+  document.getElementById('adminLockBtn').innerHTML = lockSVG + ' Admin';
+  document.getElementById('adminLockBtn').style.color = '';
+  document.querySelector('[data-view="enquiries"]').style.display = 'none';
+  const t = document.querySelector('[data-view="admin"]');
+  if (t) t.remove();
+  document.querySelector('[data-view="client"]').click();
+}
+
+function unlockAdmin(target) {
+  isAdmin = true;
+  document.getElementById('adminLockBtn').innerHTML = unlockSVG + ' Locked';
+  document.getElementById('adminLockBtn').style.color = 'var(--clay)';
+  document.querySelector('[data-view="enquiries"]').style.display = '';
+  if (!document.querySelector('[data-view="admin"]')) {
+    const t = document.createElement('button');
+    t.className = 'nav-tab'; t.dataset.view = 'admin'; t.textContent = 'Library';
+    t.addEventListener('click', () => {
+      switchView('admin');
+      document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+    document.querySelector('.nav-tabs').appendChild(t);
+  }
+  if (target === 'admin') {
+    switchView('admin');
+    document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+    document.querySelector('[data-view="admin"]').classList.add('active');
+  } else {
+    switchView('enquiries');
+    document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+    document.querySelector('[data-view="enquiries"]').classList.add('active');
+  }
+}
+
+// ===================== PASSWORD =====================
+let pwTarget = 'admin';
+function showPwModal(t) {
+  pwTarget = t;
+  document.getElementById('pwField').value = '';
+  document.getElementById('pwError').classList.remove('show');
+  document.getElementById('pwModal').classList.add('open');
+  setTimeout(() => document.getElementById('pwField').focus(), 100);
+}
+document.getElementById('cancelPw').addEventListener('click', () => document.getElementById('pwModal').classList.remove('open'));
+document.getElementById('confirmPw').addEventListener('click', checkPw);
+document.getElementById('pwField').addEventListener('keydown', e => { if (e.key==='Enter') checkPw(); });
+
+function checkPw() {
+  if (document.getElementById('pwField').value === ADMIN_PW) {
+    document.getElementById('pwModal').classList.remove('open');
+    unlockAdmin(pwTarget);
+  } else {
+    document.getElementById('pwError').classList.add('show');
+    document.getElementById('pwField').value = '';
+    document.getElementById('pwField').focus();
+  }
+}
+
+// ===================== EMAILJS SETTINGS =====================
+document.getElementById('saveEjsBtn').addEventListener('click', async () => {
+  ejsConfig = {
+    publicKey:  document.getElementById('ejsPublicKey').value.trim(),
+    serviceId:  document.getElementById('ejsServiceId').value.trim(),
+    templateId: document.getElementById('ejsTemplateId').value.trim()
+  };
+  await sSet(KEYS.ejs, ejsConfig);
+  if (ejsConfig.publicKey) emailjs.init(ejsConfig.publicKey);
+  const s = document.getElementById('ejsSaved');
+  s.style.display = 'inline'; setTimeout(() => s.style.display = 'none', 2500);
+});
+
+// ===================== PRICING EDITOR =====================
+function renderPricingEditor() {
+  document.getElementById('pricingEditor').innerHTML = Object.entries(pricing).map(([key, p]) => `
+    <div class="pricing-card">
+      <h4>${p.label}</h4>
+      ${p.letterPrices ? `
+        ${Object.entries(p.letterPrices).map(([n, price]) => `
+          <div class="price-row">
+            <label>${n} Letters</label>
+            <span class="price-prefix">$</span>
+            <input type="number" class="price-input" data-key="${key}" data-field="letter_${n}" value="${price}" step="0.50" min="0">
+          </div>`).join('')}
+        <div class="price-row">
+          <label>Extra letter (9+)</label>
+          <span class="price-prefix">$</span>
+          <input type="number" class="price-input" data-key="${key}" data-field="extra" value="${p.extraPerLetter}" step="0.50" min="0">
+        </div>
+      ` : `
+        <div class="price-row">
+          <label>Price</label>
+          <span class="price-prefix">$</span>
+          <input type="number" class="price-input" data-key="${key}" data-field="base" value="${p.basePrice}" step="0.50" min="0">
+        </div>
+      `}
+    </div>`).join('');
+}
+
+document.getElementById('savePricesBtn').addEventListener('click', async () => {
+  document.querySelectorAll('.price-input').forEach(inp => {
+    const key = inp.dataset.key, field = inp.dataset.field, val = parseFloat(inp.value)||0;
+    if (field === 'base') pricing[key].basePrice = val;
+    else if (field === 'extra') pricing[key].extraPerLetter = val;
+    else pricing[key].letterPrices[field.replace('letter_','')] = val;
+  });
+  await sSet(KEYS.pricing, pricing);
+  renderProductSelector();
+  const s = document.getElementById('pricesSaved');
+  s.style.display = 'inline'; setTimeout(() => s.style.display = 'none', 2500);
+});
+
+// ===================== PRODUCT SELECTOR =====================
+function renderProductSelector() {
+  const el = document.getElementById('productSelector');
+  el.innerHTML = Object.entries(pricing).map(([key, p]) => {
+    const price = p.letterPrices ? `from $${Math.min(...Object.values(p.letterPrices))}` : `$${p.basePrice}`;
+    return `
+      <div class="product-option ${activeProduct===key?'active':''}" data-product="${key}">
+        <div class="product-option-head">
+          <div class="product-option-name">${p.label}</div>
+          <div class="product-price-tag">${price}</div>
+        </div>
+        <div class="product-option-desc">${p.desc}</div>
+      </div>`;
+  }).join('');
+
+  el.querySelectorAll('.product-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      activeProduct = opt.dataset.product;
+      el.querySelectorAll('.product-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      const needsName = pricing[activeProduct].needsName;
+      document.getElementById('namePanel').style.display = needsName ? 'block' : 'none';
+      if (!needsName) {
+        nameValue='';
+        document.getElementById('nameInput').value='';
+        letterFabrics=[];
+        activeSlotIdx=null;
+      }
+      rebuildLetterSlots();
+      updatePriceSummary();
+      updateSubmitBtn();
+    });
+  });
+}
+
+// ===================== NAME / LETTER =====================
+document.getElementById('nameInput').addEventListener('input', function() {
+  nameValue = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase();
+  this.value = nameValue;
+  rebuildLetterSlots();
+  updatePriceSummary();
+  updateSubmitBtn();
+});
+
+function getPriceLabel(count) {
+  const p = pricing.nameBanner;
+  if (p.letterPrices[count]) return `$${Number(p.letterPrices[count]).toFixed(2)}`;
+  const max = Math.max(...Object.keys(p.letterPrices).map(Number));
+  const base = p.letterPrices[max];
+  const extra = (count - max) * p.extraPerLetter;
+  return `$${(base+extra).toFixed(2)} ($${base} + ${count-max} × $${p.extraPerLetter} extra)`;
+}
+
+// ===================== PRICE CALC + SUMMARY =====================
+function calcPrice() {
+  if (!activeProduct) return null;
+  const p = pricing[activeProduct];
+  if (p.letterPrices) {
+    const letters = nameValue.replace(/\s/g,'').length;
+    if (!letters) return null;
+    const max = Math.max(...Object.keys(p.letterPrices).map(Number));
+    if (p.letterPrices[letters]) return { base: Number(p.letterPrices[letters]), extra: 0, total: Number(p.letterPrices[letters]) };
+    const base = Number(p.letterPrices[max]);
+    const extra = (letters - max) * p.extraPerLetter;
+    return { base, extra, total: base + extra };
+  }
+  return { base: p.basePrice, extra: 0, total: p.basePrice };
+}
+
+function updatePriceSummary() {
+  const panel = document.getElementById('priceSummaryPanel');
+  const el    = document.getElementById('priceSummary');
+  if (!activeProduct) { panel.style.display='none'; return; }
+  const price = calcPrice();
+  const p = pricing[activeProduct];
+  if (p.letterPrices && !price) { panel.style.display='none'; return; }
+  panel.style.display = 'block';
+  const letters = nameValue.replace(/\s/g,'').length;
+  let html = '';
+  if (price) {
+    if (p.letterPrices) {
+      html += `<div class="price-line"><span>${letters} letter banner</span><span>$${price.base.toFixed(2)}</span></div>`;
+      if (price.extra > 0) html += `<div class="price-line"><span>Extra letters (${letters - Math.max(...Object.keys(p.letterPrices).map(Number))} × $${p.extraPerLetter})</span><span>$${price.extra.toFixed(2)}</span></div>`;
+    } else {
+      html += `<div class="price-line"><span>${p.label}</span><span>$${price.base.toFixed(2)}</span></div>`;
+    }
+    html += `<div class="price-line total"><span>Total</span><span>$${price.total.toFixed(2)} NZD</span></div>`;
+    html += `<div class="shipping-note">+ $7.00 shipping (extra for rural addresses)</div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ===================== LOGO UPLOAD =====================
+function applyLogo(src) {
+  const logoEl = document.querySelector('.logo');
+  logoEl.innerHTML = `<img src="${src}" class="logo-img" alt="Nicole Mayd Creations">`;
+  document.getElementById('logoPreviewImg').src = src;
+  document.getElementById('logoPreviewWrap').style.display = 'block';
+  document.getElementById('removeLogoBtn').style.display = 'inline-block';
+}
+
+document.getElementById('uploadLogoBtn').addEventListener('click', () => {
+  document.getElementById('logoFileInput').click();
+});
+
+document.getElementById('logoFileInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = async e => {
+    const src = e.target.result;
+    await sSet('nmc_logo', src);
+    applyLogo(src);
+  };
+  r.readAsDataURL(file);
+  this.value = '';
+});
+
+document.getElementById('removeLogoBtn').addEventListener('click', async () => {
+  try { await window.storage.delete('nmc_logo'); } catch { localStorage.removeItem('nmc_logo'); }
+  document.querySelector('.logo').innerHTML = `
+    <div class="logo-top">Nicole <span>Mayd</span></div>
+    <div class="logo-script">Creations</div>`;
+  document.getElementById('logoPreviewWrap').style.display = 'none';
+  document.getElementById('removeLogoBtn').style.display = 'none';
+});
+
+// ===================== UPLOAD =====================
+const uploadZone = document.getElementById('uploadZone');
+const adminFileInput = document.getElementById('adminFileInput');
+
+uploadZone.addEventListener('click', e => {
+  // Don't trigger if clicking the input itself
+  if (e.target === adminFileInput) return;
+  adminFileInput.click();
+});
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  processFiles(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+});
+adminFileInput.addEventListener('change', () => {
+  if (adminFileInput.files.length) processFiles(Array.from(adminFileInput.files));
+  adminFileInput.value='';
+});
+
+function processFiles(files) {
+  if (!files.length) return;
+  pendingFiles=files; pendingIdx=0; pendingTags=[];
+  showAddModal(files[0]);
+}
+
+function showAddModal(file) {
+  pendingTags=[];
+  // Reset preset cats
+  document.querySelectorAll('.preset-cat').forEach(c => c.classList.remove('active'));
+  document.getElementById('addTagChips').innerHTML='';
+  document.getElementById('addTagInput').value='';
+  // Set name from filename
+  const cleanName = file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+  document.getElementById('addNameInput').value = cleanName;
+  // Show image preview
+  const r=new FileReader();
+  r.onload=e=>{ document.getElementById('addPreviewImg').src=e.target.result; };
+  r.readAsDataURL(file);
+  // Open modal
+  document.getElementById('addModal').classList.add('open');
+  // Focus name input after a tick so modal is rendered
+  setTimeout(()=>{
+    const inp = document.getElementById('addNameInput');
+    inp.focus();
+    inp.select();
+  }, 150);
+}
+
+// Preset category chips
+document.getElementById('presetCats').addEventListener('click', e => {
+  const btn = e.target.closest('.preset-cat');
+  if (!btn) return;
+  const cat = btn.dataset.cat;
+  if (pendingTags.includes(cat)) {
+    pendingTags = pendingTags.filter(t => t !== cat);
+    btn.classList.remove('active');
+  } else {
+    pendingTags.push(cat);
+    btn.classList.add('active');
+  }
+  renderModalTags();
+});
+
+document.getElementById('addTagConfirm').addEventListener('click', pushTag);
+document.getElementById('addTagInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault();pushTag();} });
+
+function pushTag() {
+  const v = document.getElementById('addTagInput').value.trim().toLowerCase();
+  if (!v||pendingTags.includes(v)) { document.getElementById('addTagInput').value=''; return; }
+  pendingTags.push(v); renderModalTags();
+  document.getElementById('addTagInput').value='';
+}
+
+function renderModalTags() {
+  // Show only custom tags (not presets) as removable chips
+  const customTags = pendingTags.filter(t => !['pink','purple','blue','green','yellow','neutral','floral','stripe','spotty','plain','seasonal'].includes(t));
+  document.getElementById('addTagChips').innerHTML = customTags.map((t,i)=>
+    `<button class="tag-chip" data-tag="${t}">${t} ×</button>`).join('');
+  document.getElementById('addTagChips').querySelectorAll('.tag-chip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      pendingTags = pendingTags.filter(t => t !== c.dataset.tag);
+      renderModalTags();
+    });
+  });
+}
+
+document.getElementById('cancelAdd').addEventListener('click',()=>document.getElementById('addModal').classList.remove('open'));
+
+document.getElementById('confirmAdd').addEventListener('click', async () => {
+  const name = document.getElementById('addNameInput').value.trim()||'Untitled';
+  const r=new FileReader();
+  r.onload=async e=>{
+    fabrics.push({ id:Date.now()+'_'+Math.random().toString(36).slice(2), name, tags:[...pendingTags], src:e.target.result, inStock:true, createdAt:new Date().toISOString() });
+    await sSet(KEYS.fabrics, fabrics);
+    renderAdminGrid(); renderClientGrid(); renderFilters();
+    document.getElementById('addModal').classList.remove('open');
+    pendingIdx++;
+    if (pendingIdx < pendingFiles.length) showAddModal(pendingFiles[pendingIdx]);
+  };
+  r.readAsDataURL(pendingFiles[pendingIdx]);
+});
+
+// ===================== ADMIN GRID =====================
+function renderAdminGrid() {
+  const el = document.getElementById('adminGrid');
+  if (!fabrics.length) { el.innerHTML='<div class="empty-msg" style="grid-column:1/-1">No fabrics yet. Upload some above.</div>'; return; }
+  el.innerHTML = fabrics.map(f=>`
+    <div class="admin-card">
+      <div class="admin-img">
+        <img src="${f.src}" alt="${f.name}">
+        <span class="stock-badge ${f.inStock?'in':'out'}">${f.inStock?'In Stock':'Out of Stock'}</span>
+      </div>
+      <div class="admin-card-body">
+        <div class="admin-card-name">${f.name}</div>
+        <div class="tags">${f.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="admin-card-actions">
+          <button class="stock-toggle ${f.inStock?'':'out'}" data-id="${f.id}">${f.inStock?'✓ In Stock':'✗ Out of Stock'}</button>
+          <button class="del-btn" data-id="${f.id}" title="Delete">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  el.querySelectorAll('.stock-toggle').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const f=fabrics.find(x=>x.id===btn.dataset.id);
+      if(f){ f.inStock=!f.inStock; await sSet(KEYS.fabrics,fabrics); renderAdminGrid(); renderClientGrid(); }
+    });
+  });
+  el.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      // Show inline confirmation on the card
+      const card = btn.closest('.admin-card');
+      if (btn.dataset.confirming) {
+        // Second click — actually delete
+        fabrics = fabrics.filter(x=>x.id!==id);
+        selected = selected.filter(x=>x.id!==id);
+        await sSet(KEYS.fabrics, fabrics);
+        renderAdminGrid(); renderClientGrid(); renderFilters(); renderSequence();
+      } else {
+        // First click — ask for confirmation
+        btn.dataset.confirming = 'true';
+        btn.style.background = 'var(--danger)';
+        btn.style.borderColor = 'var(--danger)';
+        btn.style.color = 'white';
+        btn.title = 'Click again to confirm delete';
+        btn.innerHTML = `<svg viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
+        // Auto-reset after 3 seconds if not clicked again
+        setTimeout(()=>{
+          if (btn.dataset.confirming) {
+            delete btn.dataset.confirming;
+            btn.style.background = '';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+            btn.title = 'Delete';
+            btn.innerHTML = `<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
+          }
+        }, 3000);
+      }
+    });
+  });
+}
+
+// ===================== FILTERS =====================
+function renderFilters() {
+  const tags=[...new Set(fabrics.flatMap(f=>f.tags))].sort();
+  const el=document.getElementById('filterBar');
+  el.innerHTML=`<button class="filter-chip ${activeFilter==='all'?'active':''}" data-tag="all">All</button>`+
+    tags.map(t=>`<button class="filter-chip ${activeFilter===t?'active':''}" data-tag="${t}">${t}</button>`).join('');
+  el.querySelectorAll('.filter-chip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      activeFilter=c.dataset.tag;
+      el.querySelectorAll('.filter-chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      renderClientGrid();
+    });
+  });
+}
+
+function renderClientGrid() {
+  const el=document.getElementById('clientGrid');
+  const visible=activeFilter==='all'?fabrics:fabrics.filter(f=>f.tags.includes(activeFilter));
+  if(!visible.length){ el.innerHTML='<div class="empty-msg">No fabrics available.</div>'; return; }
+
+  // Which fabric IDs are currently in use across slots
+  const inUseIds = new Set(letterFabrics.filter(lf=>lf.fabric).map(lf=>lf.fabric.id));
+
+  el.innerHTML=visible.map(f=>{
+    const usedCount = letterFabrics.filter(lf=>lf.fabric&&lf.fabric.id===f.id).length;
+    const isSelected = selected.find(s=>s.id===f.id);
+    return `
+    <div class="client-card ${isSelected?'selected':''} ${!f.inStock?'out-of-stock':''}" data-id="${f.id}">
+      <div class="client-img"><img src="${f.src}" alt="${f.name}"></div>
+      <div class="client-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg></div>
+      ${usedCount>0?`<div class="in-use-badge">${usedCount}</div>`:''}
+      <div class="client-card-info">
+        <div class="client-card-name">${f.name}</div>
+        <div class="tags" style="margin-top:5px">${f.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        ${!f.inStock?'<div style="font-size:11px;color:var(--danger);margin-top:4px;font-weight:700;text-transform:uppercase">Out of stock</div>':''}
+      </div>
+    </div>`}).join('');
+
+  el.querySelectorAll('.client-card:not(.out-of-stock)').forEach(card=>{
+    card.addEventListener('click', () => {
+      const fabric = fabrics.find(f => f.id === card.dataset.id);
+      if (!fabric) return;
+      if (activeProduct === 'nameBanner' && nameValue.length > 0) {
+        let targetIdx = activeSlotIdx;
+        if (targetIdx === null) {
+          targetIdx = letterFabrics.findIndex(lf => !lf.fabric);
+        }
+        if (targetIdx === null || targetIdx >= letterFabrics.length) return;
+        letterFabrics[targetIdx].fabric = fabric;
+        const nextEmpty = letterFabrics.findIndex((lf, i) => i > targetIdx && !lf.fabric);
+        activeSlotIdx = nextEmpty >= 0 ? nextEmpty : null;
+        rebuildLetterSlots();
+        renderClientGrid();
+        if (activeSlotIdx !== null) {
+          const slots = document.querySelectorAll('.letter-slot');
+          if (slots[activeSlotIdx]) slots[activeSlotIdx].classList.add('active-slot');
+        }
+        updatePriceSummary();
+        updateSubmitBtn();
+      } else {
+        toggleSelect(card.dataset.id);
+      }
+    });
+  });
+}
+
+// ===================== SELECTION =====================
+function toggleSelect(id) {
+  const f=fabrics.find(x=>x.id===id);
+  if(!f) return;
+  const idx=selected.findIndex(s=>s.id===id);
+  if(idx>-1) selected.splice(idx,1); else selected.push(f);
+  renderClientGrid(); renderSequence(); updateSubmitBtn();
+}
+
+// ===================== NAME / LETTER SLOTS =====================
+// letterFabrics = array of {letter, fabric|null} — one per letter in nameValue
+let letterFabrics = [];
+let activeSlotIdx = null; // which slot is waiting for a fabric pick
+
+document.getElementById('nameInput').addEventListener('input', function() {
+  nameValue = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase();
+  this.value = nameValue;
+  rebuildLetterSlots();
+  updatePriceSummary();
+  updateSubmitBtn();
+});
+
+function rebuildLetterSlots() {
+  const letters = nameValue.split('');
+  // Preserve existing fabric choices where letter position still exists
+  const prev = letterFabrics;
+  letterFabrics = letters.map((l, i) => ({
+    letter: l,
+    fabric: prev[i] ? prev[i].fabric : null
+  }));
+  activeSlotIdx = null;
+
+  const isNameBanner = activeProduct === 'nameBanner';
+  const slotsEl = document.getElementById('letterSlots');
+  const seqEl = document.getElementById('sequenceList');
+  const stripEl = document.getElementById('previewStrip');
+  const titleEl = document.getElementById('fabricPanelTitle');
+  const countEl = document.getElementById('selCount');
+
+  if (isNameBanner && letters.length > 0) {
+    // Per-letter slot mode
+    seqEl.style.display = 'none';
+    slotsEl.innerHTML = `<div class="letter-slots-wrap">${letterFabrics.map((lf, i) => slotHTML(lf, i)).join('')}</div>`;
+    bindSlotEvents();
+    titleEl.textContent = 'Pick a fabric for each letter';
+    const filled = letterFabrics.filter(lf => lf.fabric).length;
+    countEl.textContent = `${filled}/${letters.length}`;
+    renderPreviewStrip();
+
+    // Note label
+    const note = document.getElementById('letterCountNote');
+    note.innerHTML = `<strong>${letters.length} letter${letters.length!==1?'s':''}</strong> — ${getPriceLabel(letters.length)}`;
+  } else {
+    // Non-banner or no name yet — keep general selection
+    slotsEl.innerHTML = '';
+    seqEl.style.display = 'flex';
+    titleEl.textContent = 'Your Fabrics';
+    countEl.textContent = selected.length;
+    renderSequence();
+  }
+}
+
+function slotHTML(lf, i) {
+  const hasFabric = !!lf.fabric;
+  return `
+    <div class="letter-slot ${hasFabric?'filled':''}" data-slot="${i}">
+      <div class="slot-letter">${lf.letter}</div>
+      ${hasFabric
+        ? `<img class="slot-fabric-thumb" src="${lf.fabric.src}" alt="${lf.fabric.name}">`
+        : `<div class="slot-fabric-thumb empty" style="color:var(--sand);font-size:22px">+</div>`}
+      <div class="slot-info">
+        ${hasFabric
+          ? `<div class="slot-fabric-name">${lf.fabric.name}</div>`
+          : `<div class="slot-prompt">Tap to pick a fabric</div>`}
+      </div>
+      ${hasFabric ? `<button class="slot-clear" data-slot="${i}" title="Remove">×</button>` : `<div class="slot-arrow">›</div>`}
+    </div>`;
+}
+
+function bindSlotEvents() {
+  const slotsEl = document.getElementById('letterSlots');
+
+  slotsEl.querySelectorAll('.letter-slot').forEach(slot => {
+    slot.addEventListener('click', e => {
+      if (e.target.closest('.slot-clear')) return;
+      const idx = +slot.dataset.slot;
+      activeSlotIdx = idx;
+      // Highlight active slot
+      slotsEl.querySelectorAll('.letter-slot').forEach(s => s.classList.remove('active-slot'));
+      slot.classList.add('active-slot');
+      // Scroll to fabric grid hint
+      document.getElementById('fabricPanelTitle').textContent = `Pick fabric for letter "${letterFabrics[idx].letter}"`;
+    });
+  });
+
+  slotsEl.querySelectorAll('.slot-clear').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = +btn.dataset.slot;
+      letterFabrics[idx].fabric = null;
+      if (activeSlotIdx === idx) activeSlotIdx = null;
+      rebuildLetterSlots();
+      updatePriceSummary();
+      updateSubmitBtn();
+    });
+  });
+}
+
+function renderPreviewStrip() {
+  const strip = document.getElementById('previewStrip');
+  const filled = letterFabrics.filter(lf => lf.fabric);
+  if (!filled.length) {
+    strip.innerHTML = '<div class="strip-empty">Select fabrics to preview</div>';
+    return;
+  }
+  strip.innerHTML = letterFabrics.map(lf =>
+    lf.fabric
+      ? `<div class="preview-strip-slot" style="position:relative">
+           <img src="${lf.fabric.src}" alt="${lf.fabric.name}">
+           <div style="position:absolute;bottom:0;left:0;right:0;text-align:center;font-family:'Fredoka One',cursive;font-size:16px;color:white;background:rgba(212,130,106,.7);line-height:1.4">${lf.letter}</div>
+         </div>`
+      : `<div class="preview-strip-slot" style="background:var(--linen);display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:16px;color:var(--sand)">${lf.letter}</div>`
+  ).join('');
+}
+
+// ===================== SEQUENCE (for non-banner products) =====================
+function renderSequence() {
+  const list=document.getElementById('sequenceList');
+  const strip=document.getElementById('previewStrip');
+  document.getElementById('selCount').textContent=selected.length;
+
+  if(!selected.length){
+    strip.innerHTML='<div class="strip-empty">Select fabrics to preview</div>';
+    list.innerHTML='<div class="seq-empty">Tap a fabric to add it.<br>Drag to set your order.</div>';
+    return;
+  }
+
+  strip.innerHTML=selected.map(f=>`<div class="preview-strip-slot"><img src="${f.src}" alt="${f.name}"></div>`).join('');
+
+  list.innerHTML=selected.map((f,i)=>`
+    <div class="seq-item" draggable="true" data-idx="${i}">
+      <div class="drag-handle"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="12" y2="4"/><line x1="2" y1="7" x2="12" y2="7"/><line x1="2" y1="10" x2="12" y2="10"/></svg></div>
+      <div class="seq-num">${i+1}</div>
+      <img class="seq-thumb" src="${f.src}" alt="${f.name}">
+      <div class="seq-name">${f.name}</div>
+      <button class="seq-remove" data-idx="${i}">×</button>
+    </div>`).join('');
+
+  list.querySelectorAll('.seq-item').forEach(item=>{
+    item.addEventListener('dragstart', e=>{ dragSrcIdx=+item.dataset.idx; item.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    item.addEventListener('dragend', ()=>item.classList.remove('dragging'));
+    item.addEventListener('dragover', e=>{ e.preventDefault(); list.querySelectorAll('.seq-item').forEach(x=>x.classList.remove('drag-over')); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', ()=>item.classList.remove('drag-over'));
+    item.addEventListener('drop', e=>{
+      e.preventDefault(); item.classList.remove('drag-over');
+      const dropIdx=+item.dataset.idx;
+      if(dragSrcIdx===null||dragSrcIdx===dropIdx) return;
+      const moved=selected.splice(dragSrcIdx,1)[0];
+      selected.splice(dropIdx,0,moved);
+      dragSrcIdx=null;
+      renderSequence(); renderClientGrid();
+    });
+  });
+
+  list.querySelectorAll('.seq-remove').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      selected.splice(+btn.dataset.idx,1);
+      renderSequence(); renderClientGrid(); updateSubmitBtn();
+    });
+  });
+}
+
+// ===================== SUBMIT BUTTON STATE =====================
+function updateSubmitBtn() {
+  const hasProduct  = !!activeProduct;
+  const p           = activeProduct ? pricing[activeProduct] : null;
+  const needsName   = p?.needsName;
+  const isBanner    = activeProduct === 'nameBanner';
+  const hasName     = !needsName || nameValue.replace(/\s/g,'').length > 0;
+  // For banners: all letter slots must be filled
+  const hasFabrics  = isBanner
+    ? (letterFabrics.length > 0 && letterFabrics.every(lf => lf.fabric))
+    : selected.length > 0;
+  const hasContact  = document.getElementById('enqName').value.trim().length > 0
+                   && document.getElementById('enqEmail').value.trim().length > 0;
+  document.getElementById('submitEnqBtn').disabled = !(hasProduct && hasName && hasFabrics && hasContact);
+}
+
+['enqName','enqEmail'].forEach(id=>document.getElementById(id).addEventListener('input', updateSubmitBtn));
+
+// ===================== SUBMIT ENQUIRY =====================
+document.getElementById('submitEnqBtn').addEventListener('click', async () => {
+  const name    = document.getElementById('enqName').value.trim();
+  const email   = document.getElementById('enqEmail').value.trim();
+  const note    = document.getElementById('enqNote').value.trim();
+  const product = pricing[activeProduct];
+  const price   = calcPrice();
+  const letters = nameValue.replace(/\s/g,'').length;
+
+  const isBanner = activeProduct === 'nameBanner';
+  const fabricsForEnq = isBanner
+    ? letterFabrics.map(lf => ({ letter: lf.letter, id: lf.fabric.id, name: lf.fabric.name, src: lf.fabric.src }))
+    : selected.map(f => ({ id: f.id, name: f.name, src: f.src }));
+  const fabricList = isBanner
+    ? letterFabrics.map(lf => `${lf.letter} → ${lf.fabric.name}`).join('\n')
+    : selected.map((f,i) => `${i+1}. ${f.name}`).join('\n');
+
+  const enq = {
+    id: Date.now(),
+    name, email, note,
+    product: product.label,
+    productKey: activeProduct,
+    nameText: nameValue,
+    letterCount: letters,
+    price: price ? price.total : null,
+    fabrics: fabricsForEnq,
+    isBanner,
+    submittedAt: new Date().toISOString()
+  };
+
+  // Build fabric list for email
+  const priceText  = price ? `$${price.total.toFixed(2)} NZD + $7.00 shipping` : 'To be confirmed';
+
+  const btn = document.getElementById('submitEnqBtn');
+  const sending = document.getElementById('sendingNote');
+  const errBanner = document.getElementById('formErrorBanner');
+  btn.disabled = true;
+  sending.style.display = 'block';
+  errBanner.classList.remove('show');
+
+  // Send via EmailJS if configured
+  if (ejsConfig.publicKey && ejsConfig.serviceId && ejsConfig.templateId) {
+    try {
+      await emailjs.send(ejsConfig.serviceId, ejsConfig.templateId, {
+        to_name:      name,
+        to_email:     email,
+        product:      product.label,
+        name_text:    nameValue || 'N/A',
+        letter_count: letters || 'N/A',
+        fabrics:      fabricList,
+        price:        priceText,
+        notes:        note || 'None',
+        reply_to:     email
+      });
+    } catch(err) {
+      console.error('EmailJS error:', err);
+      sending.style.display = 'none';
+      errBanner.textContent = 'Email could not be sent — please check your EmailJS settings in Admin. Your enquiry has still been saved.';
+      errBanner.classList.add('show');
+      btn.disabled = false;
+      // Still save the enquiry locally
+    }
+  }
+
+  // Always save locally
+  enquiries.unshift(enq);
+  await sSet(KEYS.enquiries, enquiries);
+  renderEnquiries();
+
+  // Reset form
+  selected = [];
+  letterFabrics = [];
+  activeSlotIdx = null;
+  activeProduct = null;
+  nameValue = '';
+  document.getElementById('enqName').value = '';
+  document.getElementById('enqEmail').value = '';
+  document.getElementById('enqNote').value = '';
+  document.getElementById('nameInput').value = '';
+  document.getElementById('namePanel').style.display = 'none';
+  document.getElementById('priceSummaryPanel').style.display = 'none';
+  renderClientGrid(); renderSequence(); renderProductSelector();
+  sending.style.display = 'none';
+  document.getElementById('successBanner').classList.add('show');
+  setTimeout(()=>document.getElementById('successBanner').classList.remove('show'), 6000);
+  updateSubmitBtn();
+});
+
+// ===================== ENQUIRIES VIEW =====================
+function renderEnquiries() {
+  const el = document.getElementById('enqLog');
+  if (!enquiries.length) { el.innerHTML='<div class="empty-msg">No enquiries yet.</div>'; return; }
+  el.innerHTML = enquiries.map(enq=>`
+    <div class="enq-entry">
+      <div class="enq-entry-head">
+        <div>
+          <div class="enq-entry-name">${enq.name}</div>
+          <div class="enq-email">${enq.email}</div>
+        </div>
+        <div class="enq-entry-date">${new Date(enq.submittedAt).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div class="enq-entry-body">
+        <span class="enq-product-tag">${enq.product}</span>
+        ${enq.nameText ? `<div class="enq-name-text">${enq.nameText.toUpperCase()}</div>` : ''}
+        ${enq.isBanner
+          ? `<div class="enq-fabrics-row">${enq.fabrics.map((f,i)=>`
+              ${i>0?'<div class="enq-arrow">→</div>':''}
+              <div style="text-align:center">
+                <div style="font-family:'Fredoka One',cursive;font-size:18px;color:var(--clay);margin-bottom:3px">${f.letter}</div>
+                <img class="enq-thumb" src="${f.src}" alt="${f.name}" title="${f.name}">
+                <div style="font-size:10px;color:var(--bark);margin-top:3px;font-weight:600">${f.name}</div>
+              </div>`).join('')}
+            </div>`
+          : `<div class="enq-fabrics-row">${enq.fabrics.map((f,i)=>`
+              ${i>0?'<div class="enq-arrow">→</div>':''}
+              <div style="text-align:center">
+                <img class="enq-thumb" src="${f.src}" alt="${f.name}" title="${f.name}">
+                <div style="font-size:10px;color:var(--bark);margin-top:3px;font-weight:600">${f.name}</div>
+              </div>`).join('')}
+            </div>`
+        }
+        ${enq.price ? `<div class="enq-price-row">Quoted: <strong>$${enq.price.toFixed(2)} NZD</strong> + $7.00 shipping</div>` : ''}
+        ${enq.note ? `<div class="enq-note">"${enq.note}"</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+document.getElementById('clearEnqBtn').addEventListener('click', async ()=>{
+  if(!confirm('Clear all enquiries? This cannot be undone.')) return;
+  enquiries=[]; await sSet(KEYS.enquiries,enquiries); renderEnquiries();
+});
+</script>
+</body>
+</html>
