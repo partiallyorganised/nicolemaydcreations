@@ -259,6 +259,25 @@ nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;al
 .preset-cat{padding:6px 14px;border-radius:20px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;border:2px solid var(--linen);background:var(--parchment);color:var(--bark);transition:all .15s;letter-spacing:.04em}
 .preset-cat.active{background:var(--pink);border-color:var(--pink);color:#fff}
 .preset-cat:hover:not(.active){border-color:var(--clay);color:var(--clay)}
+/* NEXT STEPS */
+.next-steps-wrap{max-width:600px;margin:0 auto;text-align:center;padding:20px 0}
+.next-steps-icon{font-size:64px;margin-bottom:16px}
+.next-steps-heading{font-family:'Fredoka One',cursive;font-size:40px;color:var(--clay);margin-bottom:10px}
+.next-steps-sub{font-size:16px;color:var(--bark);font-weight:600;margin-bottom:36px}
+.next-steps-cards{display:flex;flex-direction:column;gap:14px;text-align:left;margin-bottom:32px}
+.next-step-card{display:flex;align-items:flex-start;gap:16px;background:var(--white);border:2px solid var(--linen);border-radius:16px;padding:20px}
+.next-step-num{width:36px;height:36px;border-radius:50%;background:var(--clay);color:#fff;font-family:'Fredoka One',cursive;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.next-step-title{font-family:'Fredoka One',cursive;font-size:17px;color:var(--clay);margin-bottom:4px}
+.next-step-desc{font-size:13px;color:var(--bark);font-weight:600;line-height:1.5}
+.next-steps-order-summary{background:var(--parchment);border:2px solid var(--linen);border-radius:16px;padding:20px 24px;text-align:left}
+.next-steps-order-summary h4{font-family:'Fredoka One',cursive;font-size:18px;color:var(--clay);margin-bottom:14px}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;color:var(--bark);font-weight:600;margin-bottom:8px}
+.summary-fabrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.summary-fabric-thumb{text-align:center}
+.summary-fabric-thumb img{width:48px;height:48px;border-radius:10px;object-fit:cover;border:2px solid var(--linen);display:block}
+.summary-fabric-thumb span{font-size:10px;color:var(--bark);font-weight:700;display:block;margin-top:3px}
+.summary-letter{font-family:'Fredoka One',cursive;font-size:16px;color:var(--clay);display:block;margin-bottom:2px}
+
 @media(max-width:960px){
   .client-layout{grid-template-columns:1fr;display:flex;flex-direction:column}
   .right-panel{position:static;order:-1}
@@ -440,6 +459,40 @@ nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;al
   </div>
   <div class="admin-grid" id="adminGrid">
     <div class="empty-msg" style="grid-column:1/-1">No fabrics yet. Upload some above.</div>
+  </div>
+</div>
+
+<!-- ===== NEXT STEPS VIEW ===== -->
+<div class="view" id="nextStepsView">
+  <div class="next-steps-wrap">
+    <div class="next-steps-icon">🎉</div>
+    <h1 class="next-steps-heading">You're all done!</h1>
+    <p class="next-steps-sub" id="nextStepsName"></p>
+    <div class="next-steps-cards">
+      <div class="next-step-card">
+        <div class="next-step-num">1</div>
+        <div>
+          <div class="next-step-title">Check your inbox</div>
+          <div class="next-step-desc">A confirmation email is on its way to you with your order details.</div>
+        </div>
+      </div>
+      <div class="next-step-card">
+        <div class="next-step-num">2</div>
+        <div>
+          <div class="next-step-title">Nicole will be in touch</div>
+          <div class="next-step-desc">Nicole will review your order and contact you within 1–2 business days to confirm everything and arrange payment.</div>
+        </div>
+      </div>
+      <div class="next-step-card">
+        <div class="next-step-num">3</div>
+        <div>
+          <div class="next-step-title">Your order gets made ✂️</div>
+          <div class="next-step-desc">Once confirmed and payment is received, Nicole will get to work on your creation with love.</div>
+        </div>
+      </div>
+    </div>
+    <div class="next-steps-order-summary" id="nextStepsSummary"></div>
+    <button class="btn btn-dark" id="nextStepsBack" style="margin-top:32px">Start a New Order</button>
   </div>
 </div>
 
@@ -1338,10 +1391,9 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
     } catch(err) {
       console.error('EmailJS error:', err);
       sending.style.display = 'none';
-      errBanner.textContent = 'Email could not be sent — please check your EmailJS settings in Admin. Your enquiry has still been saved.';
+      errBanner.textContent = 'Email could not be sent — your enquiry has still been saved and Nicole will be in touch.';
       errBanner.classList.add('show');
       btn.disabled = false;
-      // Still save the enquiry locally
     }
   }
 
@@ -1350,7 +1402,7 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
   await sSet(KEYS.enquiries, enquiries);
   renderEnquiries();
 
-  // Reset form
+  // Reset form state
   selected = [];
   letterFabrics = [];
   activeSlotIdx = null;
@@ -1362,11 +1414,40 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
   document.getElementById('nameInput').value = '';
   document.getElementById('namePanel').style.display = 'none';
   document.getElementById('priceSummaryPanel').style.display = 'none';
-  renderClientGrid(); renderSequence(); renderProductSelector();
   sending.style.display = 'none';
-  document.getElementById('successBanner').classList.add('show');
-  setTimeout(()=>document.getElementById('successBanner').classList.remove('show'), 6000);
+  renderClientGrid(); renderSequence(); renderProductSelector();
   updateSubmitBtn();
+
+  // Show next steps screen
+  showNextSteps(name, enq);
+});
+
+// ===================== NEXT STEPS =====================
+function showNextSteps(name, enq) {
+  switchView('nextSteps');
+  document.getElementById('nextStepsName').textContent = `Thanks ${name.split(' ')[0]}! Your enquiry has been received.`;
+
+  const price = enq.price ? `$${enq.price.toFixed(2)} NZD + $7.00 shipping` : 'To be confirmed';
+  const summary = document.getElementById('nextStepsSummary');
+  summary.innerHTML = `
+    <h4>Your Order Summary</h4>
+    <div class="summary-row"><span>Product</span><span>${enq.product}</span></div>
+    ${enq.nameText ? `<div class="summary-row"><span>Name / Word</span><span>${enq.nameText}</span></div>` : ''}
+    <div class="summary-row"><span>Estimated Total</span><span>${price}</span></div>
+    <div class="summary-fabrics">
+      ${enq.fabrics.map(f => `
+        <div class="summary-fabric-thumb">
+          ${enq.isBanner ? `<span class="summary-letter">${f.letter}</span>` : ''}
+          <img src="${f.src}" alt="${f.name}">
+          <span>${f.name}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+document.getElementById('nextStepsBack').addEventListener('click', () => {
+  switchView('client');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-view="client"]').classList.add('active');
 });
 
 // ===================== ENQUIRIES VIEW =====================
