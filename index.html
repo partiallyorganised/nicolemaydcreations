@@ -605,8 +605,66 @@ const DEFAULT_PRICING = {
 };
 
 // ===================== STORAGE =====================
-const KEYS = { fabrics:'nmc_fabrics', enquiries:'nmc_enquiries', pricing:'nmc_pricing', ejs:'nmc_ejs' };
+// ===================== SUPABASE CONFIG =====================
+const SUPABASE_URL = 'https://gqhhmxgailvsrcbsizpu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_YSjyMLZoq8j3De5c0Cc_wQ_p76bw8Jl';
+const BUCKET = 'Fabrics';
 
+const sb = {
+  async from(table) {
+    const base = `${SUPABASE_URL}/rest/v1/${table}`;
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+    return {
+      async select(query='*') {
+        const r = await fetch(`${base}?select=${query}`, { headers });
+        return r.json();
+      },
+      async insert(data) {
+        const r = await fetch(base, { method:'POST', headers, body: JSON.stringify(data) });
+        return r.json();
+      },
+      async upsert(data) {
+        const h = {...headers, 'Prefer': 'resolution=merge-duplicates,return=representation'};
+        const r = await fetch(base, { method:'POST', headers:h, body: JSON.stringify(data) });
+        return r.json();
+      },
+      async delete(id, col='id') {
+        const r = await fetch(`${base}?${col}=eq.${id}`, { method:'DELETE', headers });
+        return r.ok;
+      },
+      async update(id, data, col='id') {
+        const r = await fetch(`${base}?${col}=eq.${id}`, { method:'PATCH', headers, body: JSON.stringify(data) });
+        return r.json();
+      }
+    };
+  },
+  async uploadImage(file) {
+    const ext = file.name.split('.').pop();
+    const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+      body: file
+    });
+    if (!r.ok) throw new Error('Upload failed');
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+  },
+  async deleteImage(url) {
+    const path = url.split(`/object/public/${BUCKET}/`)[1];
+    if (!path) return;
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+  }
+};
+
+// Local fallback for settings only (pricing, emailjs config)
 async function sGet(key) {
   try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
   catch { const d = localStorage.getItem(key); return d ? JSON.parse(d) : null; }
@@ -623,20 +681,51 @@ let isAdmin=false, pendingFiles=[], pendingIdx=0, pendingTags=[], dragSrcIdx=nul
 
 // ===================== BOOT =====================
 (async () => {
-  fabrics      = (await sGet(KEYS.fabrics))   || [];
-  enquiries    = (await sGet(KEYS.enquiries)) || [];
-  pricing      = (await sGet(KEYS.pricing))   || JSON.parse(JSON.stringify(DEFAULT_PRICING));
-  ejsConfig    = (await sGet(KEYS.ejs))       || {};
+  // Load settings from local storage (device-specific is fine for these)
+  pricing   = (await sGet('nmc_pricing')) || JSON.parse(JSON.stringify(DEFAULT_PRICING));
+  ejsConfig = (await sGet('nmc_ejs'))     || {};
 
-  // pre-fill EmailJS fields if saved
   if (ejsConfig.publicKey)  document.getElementById('ejsPublicKey').value  = ejsConfig.publicKey;
   if (ejsConfig.serviceId)  document.getElementById('ejsServiceId').value  = ejsConfig.serviceId;
   if (ejsConfig.templateId) document.getElementById('ejsTemplateId').value = ejsConfig.templateId;
   if (ejsConfig.publicKey)  emailjs.init(ejsConfig.publicKey);
 
-  // Load saved logo
-  const savedLogo = await sGet('nmc_logo');
-  if (savedLogo) applyLogo(savedLogo);
+  // Load logo from Supabase settings table
+  try {
+    const settingsDb = await sb.from('settings');
+    const settings = await settingsDb.select();
+    const logoSetting = Array.isArray(settings) ? settings.find(s => s.key === 'logo') : null;
+    if (logoSetting?.value?.url) applyLogo(logoSetting.value.url);
+    const pricingSetting = Array.isArray(settings) ? settings.find(s => s.key === 'pricing') : null;
+    if (pricingSetting?.value) pricing = pricingSetting.value;
+  } catch(e) { console.error('Settings load error:', e); }
+
+  // Load fabrics from Supabase
+  try {
+    const fabricsDb = await sb.from('fabrics');
+    const data = await fabricsDb.select();
+    if (Array.isArray(data)) {
+      fabrics = data.map(f => ({
+        id: f.id, name: f.name, tags: f.tags || [],
+        src: f.image_url, inStock: f.in_stock, createdAt: f.created_at
+      }));
+    }
+  } catch(e) { console.error('Fabrics load error:', e); }
+
+  // Load enquiries from Supabase
+  try {
+    const enqDb = await sb.from('enquiries');
+    const data = await enqDb.select();
+    if (Array.isArray(data)) {
+      enquiries = data.sort((a,b) => b.id - a.id).map(e => ({
+        id: e.id, name: e.name, email: e.email, note: e.note,
+        product: e.product, productKey: e.product_key,
+        nameText: e.name_text, letterCount: e.letter_count,
+        price: e.price, fabrics: e.fabrics, isBanner: e.is_banner,
+        submittedAt: e.submitted_at
+      }));
+    }
+  } catch(e) { console.error('Enquiries load error:', e); }
 
   renderProductSelector();
   renderClientGrid();
@@ -777,7 +866,11 @@ document.getElementById('savePricesBtn').addEventListener('click', async () => {
     else if (field === 'extra') pricing[key].extraPerLetter = val;
     else pricing[key].letterPrices[field.replace('letter_','')] = val;
   });
-  await sSet(KEYS.pricing, pricing);
+  await sSet('nmc_pricing', pricing);
+  try {
+    const db = await sb.from('settings');
+    await db.upsert({ key: 'pricing', value: pricing });
+  } catch(e) { console.error(e); }
   renderProductSelector();
   const s = document.getElementById('pricesSaved');
   s.style.display = 'inline'; setTimeout(() => s.style.display = 'none', 2500);
@@ -888,21 +981,28 @@ document.getElementById('uploadLogoBtn').addEventListener('click', () => {
   document.getElementById('logoFileInput').click();
 });
 
-document.getElementById('logoFileInput').addEventListener('change', function() {
+document.getElementById('logoFileInput').addEventListener('change', async function() {
   const file = this.files[0];
   if (!file) return;
-  const r = new FileReader();
-  r.onload = async e => {
-    const src = e.target.result;
-    await sSet('nmc_logo', src);
-    applyLogo(src);
-  };
-  r.readAsDataURL(file);
+  document.getElementById('uploadLogoBtn').textContent = 'Uploading…';
+  try {
+    const url = await sb.uploadImage(file);
+    const settingsDb = await sb.from('settings');
+    await settingsDb.upsert({ key: 'logo', value: { url } });
+    applyLogo(url);
+  } catch(e) {
+    alert('Logo upload failed. Check your Supabase storage bucket is public.');
+    console.error(e);
+  }
+  document.getElementById('uploadLogoBtn').textContent = 'Choose Logo Image';
   this.value = '';
 });
 
 document.getElementById('removeLogoBtn').addEventListener('click', async () => {
-  try { await window.storage.delete('nmc_logo'); } catch { localStorage.removeItem('nmc_logo'); }
+  try {
+    const settingsDb = await sb.from('settings');
+    await settingsDb.delete('logo', 'key');
+  } catch(e) { console.error(e); }
   document.querySelector('.logo').innerHTML = `
     <div class="logo-top">Nicole <span>Mayd</span></div>
     <div class="logo-script">Creations</div>`;
@@ -1001,16 +1101,34 @@ document.getElementById('cancelAdd').addEventListener('click',()=>document.getEl
 
 document.getElementById('confirmAdd').addEventListener('click', async () => {
   const name = document.getElementById('addNameInput').value.trim()||'Untitled';
-  const r=new FileReader();
-  r.onload=async e=>{
-    fabrics.push({ id:Date.now()+'_'+Math.random().toString(36).slice(2), name, tags:[...pendingTags], src:e.target.result, inStock:true, createdAt:new Date().toISOString() });
-    await sSet(KEYS.fabrics, fabrics);
+  const file = pendingFiles[pendingIdx];
+  const confirmBtn = document.getElementById('confirmAdd');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Uploading…';
+
+  try {
+    // Upload image to Supabase Storage
+    const imageUrl = await sb.uploadImage(file);
+
+    // Save fabric record to Supabase
+    const fabricId = Date.now()+'_'+Math.random().toString(36).slice(2);
+    const fabricsDb = await sb.from('fabrics');
+    await fabricsDb.insert({
+      id: fabricId, name, tags: pendingTags,
+      image_url: imageUrl, in_stock: true
+    });
+
+    fabrics.push({ id: fabricId, name, tags: pendingTags, src: imageUrl, inStock: true });
     renderAdminGrid(); renderClientGrid(); renderFilters();
     document.getElementById('addModal').classList.remove('open');
     pendingIdx++;
     if (pendingIdx < pendingFiles.length) showAddModal(pendingFiles[pendingIdx]);
-  };
-  r.readAsDataURL(pendingFiles[pendingIdx]);
+  } catch(e) {
+    alert('Upload failed — check your Supabase storage bucket is set to public.');
+    console.error(e);
+  }
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = 'Save to Library';
 });
 
 // ===================== ADMIN GRID =====================
@@ -1040,40 +1158,39 @@ function renderAdminGrid() {
   el.querySelectorAll('.stock-toggle').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const f=fabrics.find(x=>x.id===btn.dataset.id);
-      if(f){ f.inStock=!f.inStock; await sSet(KEYS.fabrics,fabrics); renderAdminGrid(); renderClientGrid(); }
+      if (!f) return;
+      f.inStock=!f.inStock;
+      try { const db=await sb.from('fabrics'); await db.update(f.id,{in_stock:f.inStock}); }
+      catch(e){ console.error(e); }
+      renderAdminGrid(); renderClientGrid();
     });
   });
   el.querySelectorAll('.del-btn').forEach(btn=>{
     btn.addEventListener('click', async e=>{
       e.stopPropagation();
       const id = btn.dataset.id;
-      // Show inline confirmation on the card
-      const card = btn.closest('.admin-card');
       if (btn.dataset.confirming) {
-        // Second click — actually delete
-        fabrics = fabrics.filter(x=>x.id!==id);
-        selected = selected.filter(x=>x.id!==id);
-        await sSet(KEYS.fabrics, fabrics);
+        const fabric = fabrics.find(x=>x.id===id);
+        try {
+          const db=await sb.from('fabrics');
+          await db.delete(id);
+          if (fabric?.src) await sb.deleteImage(fabric.src);
+        } catch(e){ console.error(e); }
+        fabrics=fabrics.filter(x=>x.id!==id);
+        selected=selected.filter(x=>x.id!==id);
         renderAdminGrid(); renderClientGrid(); renderFilters(); renderSequence();
       } else {
-        // First click — ask for confirmation
-        btn.dataset.confirming = 'true';
-        btn.style.background = 'var(--danger)';
-        btn.style.borderColor = 'var(--danger)';
-        btn.style.color = 'white';
-        btn.title = 'Click again to confirm delete';
-        btn.innerHTML = `<svg viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
-        // Auto-reset after 3 seconds if not clicked again
+        btn.dataset.confirming='true';
+        btn.style.background='var(--danger)'; btn.style.borderColor='var(--danger)'; btn.style.color='white';
+        btn.title='Click again to confirm delete';
+        btn.innerHTML=`<svg viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
         setTimeout(()=>{
-          if (btn.dataset.confirming) {
+          if(btn.dataset.confirming){
             delete btn.dataset.confirming;
-            btn.style.background = '';
-            btn.style.borderColor = '';
-            btn.style.color = '';
-            btn.title = 'Delete';
-            btn.innerHTML = `<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
+            btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; btn.title='Delete';
+            btn.innerHTML=`<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,4 11,4"/><path d="M5 4V2.5h3V4"/><path d="M3 4l.8 7h5.4l.8-7"/></svg>`;
           }
-        }, 3000);
+        },3000);
       }
     });
   });
@@ -1373,10 +1490,20 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
 
     const priceText = price ? `$${price.total.toFixed(2)} NZD + $7.00 shipping` : 'To be confirmed';
 
-    // Save locally
+    // Save to Supabase
     try {
       enquiries.unshift(enq);
-      await Promise.race([sSet(KEYS.enquiries, enquiries), new Promise(r => setTimeout(r, 3000))]);
+      const db = await sb.from('enquiries');
+      await Promise.race([
+        db.insert({
+          id: enq.id, name: enq.name, email: enq.email, note: enq.note,
+          product: enq.product, product_key: enq.productKey,
+          name_text: enq.nameText, letter_count: enq.letterCount,
+          price: enq.price, fabrics: enq.fabrics, is_banner: enq.isBanner,
+          submitted_at: enq.submittedAt
+        }),
+        new Promise(r => setTimeout(r, 3000))
+      ]);
       renderEnquiries();
     } catch(e) { console.error('Save error:', e); }
 
@@ -1495,7 +1622,14 @@ function renderEnquiries() {
 
 document.getElementById('clearEnqBtn').addEventListener('click', async ()=>{
   if(!confirm('Clear all enquiries? This cannot be undone.')) return;
-  enquiries=[]; await sSet(KEYS.enquiries,enquiries); renderEnquiries();
+  try {
+    // Delete all enquiries — using a workaround since we need to delete all rows
+    for (const e of enquiries) {
+      const db = await sb.from('enquiries');
+      await db.delete(e.id);
+    }
+  } catch(e) { console.error(e); }
+  enquiries=[]; renderEnquiries();
 });
 </script>
 </body>
