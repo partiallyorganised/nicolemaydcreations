@@ -1336,89 +1336,82 @@ function updateSubmitBtn() {
 
 ['enqName','enqEmail'].forEach(id=>document.getElementById(id).addEventListener('input', updateSubmitBtn));
 
-// ===================== SUBMIT ENQUIRY =====================
 document.getElementById('submitEnqBtn').addEventListener('click', async () => {
-  const name    = document.getElementById('enqName').value.trim();
-  const email   = document.getElementById('enqEmail').value.trim();
-  const note    = document.getElementById('enqNote').value.trim();
-  const product = pricing[activeProduct];
-  const price   = calcPrice();
-  const letters = nameValue.replace(/\s/g,'').length;
-
-  const isBanner = activeProduct === 'nameBanner';
-  const fabricsForEnq = isBanner
-    ? letterFabrics.map(lf => ({ letter: lf.letter, id: lf.fabric.id, name: lf.fabric.name, src: lf.fabric.src }))
-    : selected.map(f => ({ id: f.id, name: f.name, src: f.src }));
-  const fabricList = isBanner
-    ? letterFabrics.map(lf => `${lf.letter} → ${lf.fabric.name}`).join('\n')
-    : selected.map((f,i) => `${i+1}. ${f.name}`).join('\n');
-
-  const enq = {
-    id: Date.now(),
-    name, email, note,
-    product: product.label,
-    productKey: activeProduct,
-    nameText: nameValue,
-    letterCount: letters,
-    price: price ? price.total : null,
-    fabrics: fabricsForEnq,
-    isBanner,
-    submittedAt: new Date().toISOString()
-  };
-
-  // Build fabric list for email
-  const priceText  = price ? `$${price.total.toFixed(2)} NZD + $7.00 shipping` : 'To be confirmed';
-
   const btn = document.getElementById('submitEnqBtn');
   const sending = document.getElementById('sendingNote');
-  const errBanner = document.getElementById('formErrorBanner');
   btn.disabled = true;
   sending.style.display = 'block';
-  errBanner.classList.remove('show');
 
-  // Always save locally first — regardless of email outcome
-  enquiries.unshift(enq);
-  await sSet(KEYS.enquiries, enquiries);
-  renderEnquiries();
+  try {
+    const name    = document.getElementById('enqName').value.trim();
+    const email   = document.getElementById('enqEmail').value.trim();
+    const note    = document.getElementById('enqNote').value.trim();
+    const product = pricing[activeProduct];
+    const price   = calcPrice();
+    const letters = nameValue.replace(/\s/g,'').length;
 
-  // Attempt EmailJS — but never let it block the flow
-  if (ejsConfig.publicKey && ejsConfig.serviceId && ejsConfig.templateId) {
+    const isBanner = activeProduct === 'nameBanner';
+    const fabricsForEnq = isBanner
+      ? letterFabrics.map(lf => ({ letter: lf.letter, id: lf.fabric.id, name: lf.fabric.name, src: lf.fabric.src }))
+      : selected.map(f => ({ id: f.id, name: f.name, src: f.src }));
+    const fabricList = isBanner
+      ? letterFabrics.map(lf => `${lf.letter} → ${lf.fabric.name}`).join('\n')
+      : selected.map((f,i) => `${i+1}. ${f.name}`).join('\n');
+
+    const enq = {
+      id: Date.now(),
+      name, email, note,
+      product: product.label,
+      productKey: activeProduct,
+      nameText: nameValue,
+      letterCount: letters,
+      price: price ? price.total : null,
+      fabrics: fabricsForEnq,
+      isBanner,
+      submittedAt: new Date().toISOString()
+    };
+
+    const priceText = price ? `$${price.total.toFixed(2)} NZD + $7.00 shipping` : 'To be confirmed';
+
+    // Save locally
     try {
-      await Promise.race([
-        emailjs.send(ejsConfig.serviceId, ejsConfig.templateId, {
-          to_name:      name,
-          to_email:     email,
-          product:      product.label,
-          name_text:    nameValue || 'N/A',
-          letter_count: letters || 'N/A',
-          fabrics:      fabricList,
-          price:        priceText,
-          notes:        note || 'None',
-          reply_to:     email
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
-      ]);
-    } catch(err) {
-      console.error('EmailJS error:', err);
-    }
-  }
+      enquiries.unshift(enq);
+      await Promise.race([sSet(KEYS.enquiries, enquiries), new Promise(r => setTimeout(r, 3000))]);
+      renderEnquiries();
+    } catch(e) { console.error('Save error:', e); }
 
-  // Always reset and move on — no matter what happened above
-  sending.style.display = 'none';
-  selected = [];
-  letterFabrics = [];
-  activeSlotIdx = null;
-  activeProduct = null;
-  nameValue = '';
-  document.getElementById('enqName').value = '';
-  document.getElementById('enqEmail').value = '';
-  document.getElementById('enqNote').value = '';
-  document.getElementById('nameInput').value = '';
-  document.getElementById('namePanel').style.display = 'none';
-  document.getElementById('priceSummaryPanel').style.display = 'none';
-  renderClientGrid(); renderSequence(); renderProductSelector();
-  updateSubmitBtn();
-  showNextSteps(name, enq);
+    // Attempt email — never block on it
+    if (ejsConfig.publicKey && ejsConfig.serviceId && ejsConfig.templateId) {
+      try {
+        await Promise.race([
+          emailjs.send(ejsConfig.serviceId, ejsConfig.templateId, {
+            to_name: name, to_email: email, product: product.label,
+            name_text: nameValue || 'N/A', letter_count: letters || 'N/A',
+            fabrics: fabricList, price: priceText, notes: note || 'None', reply_to: email
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+        ]);
+      } catch(err) { console.error('EmailJS error:', err); }
+    }
+
+    // Reset
+    selected = []; letterFabrics = []; activeSlotIdx = null; activeProduct = null; nameValue = '';
+    document.getElementById('enqName').value = '';
+    document.getElementById('enqEmail').value = '';
+    document.getElementById('enqNote').value = '';
+    document.getElementById('nameInput').value = '';
+    document.getElementById('namePanel').style.display = 'none';
+    document.getElementById('priceSummaryPanel').style.display = 'none';
+    renderClientGrid(); renderSequence(); renderProductSelector(); updateSubmitBtn();
+    showNextSteps(name, enq);
+
+  } catch(err) {
+    console.error('Submit error:', err);
+    alert('Something went wrong. Please try again.');
+  } finally {
+    sending.style.display = 'none';
+    btn.disabled = false;
+  }
 });
 
 // ===================== NEXT STEPS =====================
