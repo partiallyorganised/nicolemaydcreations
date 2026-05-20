@@ -259,6 +259,7 @@ nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;al
 .preset-cat{padding:6px 14px;border-radius:20px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;border:2px solid var(--linen);background:var(--parchment);color:var(--bark);transition:all .15s;letter-spacing:.04em}
 .preset-cat.active{background:var(--pink);border-color:var(--pink);color:#fff}
 .preset-cat:hover:not(.active){border-color:var(--clay);color:var(--clay)}
+.pre-submit-note{font-size:12px;color:var(--bark);font-weight:600;background:var(--parchment);border-radius:10px;padding:10px 14px;line-height:1.5}
 /* NEXT STEPS */
 .next-steps-wrap{max-width:600px;margin:0 auto;text-align:center;padding:20px 0}
 .next-steps-icon{font-size:64px;margin-bottom:16px}
@@ -384,6 +385,7 @@ nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;al
             <label>Notes (optional)</label>
             <textarea id="enqNote" rows="2" placeholder="Colours, occasion, anything else…"></textarea>
           </div>
+          <div class="pre-submit-note">📧 You'll receive a confirmation email once submitted — check your junk if you don't see it.</div>
           <div class="error-banner" id="formErrorBanner" style="margin-bottom:0"></div>
           <div class="sending-note" id="sendingNote">Sending your enquiry… ✨</div>
           <button class="submit-btn" id="submitEnqBtn" disabled>Submit</button>
@@ -473,7 +475,7 @@ nav{background:var(--white);border-bottom:2px solid var(--linen);display:flex;al
         <div class="next-step-num">1</div>
         <div>
           <div class="next-step-title">Check your inbox</div>
-          <div class="next-step-desc">A confirmation email is on its way to you with your order details.</div>
+          <div class="next-step-desc">A confirmation email is on its way to you now with your order details. If you don't see it in a few minutes, <strong>check your junk or spam folder</strong>.</div>
         </div>
       </div>
       <div class="next-step-card">
@@ -1374,35 +1376,35 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
   sending.style.display = 'block';
   errBanner.classList.remove('show');
 
-  // Send via EmailJS if configured
-  if (ejsConfig.publicKey && ejsConfig.serviceId && ejsConfig.templateId) {
-    try {
-      await emailjs.send(ejsConfig.serviceId, ejsConfig.templateId, {
-        to_name:      name,
-        to_email:     email,
-        product:      product.label,
-        name_text:    nameValue || 'N/A',
-        letter_count: letters || 'N/A',
-        fabrics:      fabricList,
-        price:        priceText,
-        notes:        note || 'None',
-        reply_to:     email
-      });
-    } catch(err) {
-      console.error('EmailJS error:', err);
-      sending.style.display = 'none';
-      errBanner.textContent = 'Email could not be sent — your enquiry has still been saved and Nicole will be in touch.';
-      errBanner.classList.add('show');
-      btn.disabled = false;
-    }
-  }
-
-  // Always save locally
+  // Always save locally first — regardless of email outcome
   enquiries.unshift(enq);
   await sSet(KEYS.enquiries, enquiries);
   renderEnquiries();
 
-  // Reset form state
+  // Attempt EmailJS — but never let it block the flow
+  if (ejsConfig.publicKey && ejsConfig.serviceId && ejsConfig.templateId) {
+    try {
+      await Promise.race([
+        emailjs.send(ejsConfig.serviceId, ejsConfig.templateId, {
+          to_name:      name,
+          to_email:     email,
+          product:      product.label,
+          name_text:    nameValue || 'N/A',
+          letter_count: letters || 'N/A',
+          fabrics:      fabricList,
+          price:        priceText,
+          notes:        note || 'None',
+          reply_to:     email
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+      ]);
+    } catch(err) {
+      console.error('EmailJS error:', err);
+    }
+  }
+
+  // Always reset and move on — no matter what happened above
+  sending.style.display = 'none';
   selected = [];
   letterFabrics = [];
   activeSlotIdx = null;
@@ -1414,11 +1416,8 @@ document.getElementById('submitEnqBtn').addEventListener('click', async () => {
   document.getElementById('nameInput').value = '';
   document.getElementById('namePanel').style.display = 'none';
   document.getElementById('priceSummaryPanel').style.display = 'none';
-  sending.style.display = 'none';
   renderClientGrid(); renderSequence(); renderProductSelector();
   updateSubmitBtn();
-
-  // Show next steps screen
   showNextSteps(name, enq);
 });
 
