@@ -1437,6 +1437,18 @@ function showNextSteps(name, enq) {
 }
 
 document.getElementById('nextStepsBack').addEventListener('click', () => {
+  // Full reset
+  selected = []; letterFabrics = []; activeSlotIdx = null; activeProduct = null; nameValue = '';
+  document.getElementById('enqName').value = '';
+  document.getElementById('enqEmail').value = '';
+  document.getElementById('enqNote').value = '';
+  document.getElementById('nameInput').value = '';
+  document.getElementById('namePanel').style.display = 'none';
+  document.getElementById('priceSummaryPanel').style.display = 'none';
+  document.getElementById('letterCountNote').innerHTML = '';
+  document.getElementById('letterSlots').innerHTML = '';
+  document.getElementById('previewStrip').innerHTML = '<div class="strip-empty">Select fabrics to preview</div>';
+  renderClientGrid(); renderSequence(); renderProductSelector(); updateSubmitBtn();
   switchView('client');
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('[data-view="client"]').classList.add('active');
